@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -10,10 +11,18 @@ import { militaryApi, Personnel } from '@/lib/militaryApi';
 import { useNavigate } from 'react-router-dom';
 
 const Registry = () => {
+  const [searchParams] = useSearchParams();
   const [search, setSearch] = useState('');
   const [unitFilter, setUnitFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const statusParam = searchParams.get('status');
+    if (statusParam) {
+      setStatusFilter(statusParam);
+    }
+  }, [searchParams]);
 
   const { data, isLoading } = useQuery({
     queryKey: ['personnel', search, unitFilter, statusFilter],
@@ -27,6 +36,9 @@ const Registry = () => {
       'госпитализация': 'bg-red-500',
       'отпуск': 'bg-orange-500',
       'убыл': 'bg-gray-500',
+      'ввк': 'bg-yellow-500',
+      'амбулаторное_лечение': 'bg-teal-500',
+      'увольнение': 'bg-pink-500',
     };
     return colors[status] || 'bg-blue-500';
   };
@@ -38,6 +50,9 @@ const Registry = () => {
       'госпитализация': 'Госпитализация',
       'отпуск': 'В отпуске',
       'убыл': 'Убыл',
+      'ввк': 'ВВК',
+      'амбулаторное_лечение': 'Амбулаторное',
+      'увольнение': 'Увольнение',
     };
     return labels[status] || status;
   };
@@ -127,6 +142,9 @@ const Registry = () => {
                 <SelectItem value="в_пвд">В ПВД</SelectItem>
                 <SelectItem value="госпитализация">Госпитализация</SelectItem>
                 <SelectItem value="отпуск">В отпуске</SelectItem>
+                <SelectItem value="ввк">ВВК</SelectItem>
+                <SelectItem value="амбулаторное_лечение">Амбулаторное лечение</SelectItem>
+                <SelectItem value="увольнение">Увольнение</SelectItem>
                 <SelectItem value="убыл">Убыл</SelectItem>
               </SelectContent>
             </Select>

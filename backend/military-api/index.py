@@ -69,16 +69,53 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 def get_stats(conn) -> Dict[str, Any]:
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute("""
+            UPDATE personnel 
+            SET days_in_current_status = EXTRACT(DAY FROM (NOW() - status_changed_at))::INTEGER
+            WHERE status_changed_at IS NOT NULL
+        """)
+        
+        cur.execute("""
             SELECT 
                 COUNT(*) as total,
                 COUNT(*) FILTER (WHERE current_status = 'в_пвд') as v_pvd,
                 COUNT(*) FILTER (WHERE current_status = 'в_строю') as v_stroyu,
                 COUNT(*) FILTER (WHERE current_status = 'госпитализация') as gospitalizaciya,
                 COUNT(*) FILTER (WHERE current_status = 'отпуск') as otpusk,
-                COUNT(*) FILTER (WHERE current_status = 'убыл') as ubyl
+                COUNT(*) FILTER (WHERE current_status = 'убыл') as ubyl,
+                COUNT(*) FILTER (WHERE current_status = 'ввк') as vvk,
+                COUNT(*) FILTER (WHERE current_status = 'амбулаторное_лечение') as ambulatory,
+                COUNT(*) FILTER (WHERE current_status = 'увольнение') as uvolnenie
             FROM personnel
         """)
         stats = cur.fetchone()
+        
+        cur.execute("""
+            SELECT COUNT(*) as count
+            FROM personnel
+            WHERE current_status = 'госпитализация' 
+            AND days_in_current_status > 30
+        """)
+        hosp_alert = cur.fetchone()['count']
+        
+        cur.execute("""
+            SELECT COUNT(*) as count
+            FROM personnel
+            WHERE current_status = 'в_пвд' 
+            AND days_in_current_status > 30
+        """)
+        pvd_alert = cur.fetchone()['count']
+        
+        cur.execute("""
+            SELECT COUNT(*) as count
+            FROM movements m
+            JOIN personnel p ON p.id = m.personnel_id
+            WHERE m.movement_type = 'отпуск'
+            AND m.expected_return_date < CURRENT_DATE
+            AND p.current_status = 'отпуск'
+        """)
+        leave_alert = cur.fetchone()['count']
+        
+        conn.commit()
         
     return success_response({
         'total': stats['total'],
@@ -86,7 +123,15 @@ def get_stats(conn) -> Dict[str, Any]:
         'v_stroyu': stats['v_stroyu'],
         'gospitalizaciya': stats['gospitalizaciya'],
         'otpusk': stats['otpusk'],
-        'ubyl': stats['ubyl']
+        'ubyl': stats['ubyl'],
+        'vvk': stats['vvk'],
+        'ambulatory': stats['ambulatory'],
+        'uvolnenie': stats['uvolnenie'],
+        'alerts': {
+            'hosp_over_30': hosp_alert,
+            'pvd_over_30': pvd_alert,
+            'leave_overdue': leave_alert
+        }
     })
 
 def get_personnel_list(conn, query_params: Dict) -> Dict[str, Any]:
@@ -199,11 +244,18 @@ def update_personnel(conn, personnel_id: int, data: Dict) -> Dict[str, Any]:
     return success_response(dict(personnel))
 
 def add_movement(conn, data: Dict) -> Dict[str, Any]:
+    from datetime import datetime, timedelta
+    
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        expected_return = None
+        if data['movement_type'] == 'отпуск' and data.get('leave_days'):
+            start = datetime.strptime(data['start_date'], '%Y-%m-%d')
+            expected_return = (start + timedelta(days=int(data['leave_days']))).strftime('%Y-%m-%d')
+        
         cur.execute("""
             INSERT INTO movements 
-            (personnel_id, movement_type, start_date, end_date, destination, notes)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            (personnel_id, movement_type, start_date, end_date, destination, notes, vmo, leave_days, expected_return_date)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING *
         """, (
             data['personnel_id'],
@@ -211,16 +263,32 @@ def add_movement(conn, data: Dict) -> Dict[str, Any]:
             data['start_date'],
             data.get('end_date'),
             data.get('destination'),
-            data.get('notes')
+            data.get('notes'),
+            data.get('vmo'),
+            data.get('leave_days'),
+            expected_return
         ))
         movement = cur.fetchone()
         
-        if data['movement_type'] in ['госпитализация', 'отпуск', 'убыл']:
+        status_update_types = ['госпитализация', 'отпуск', 'убыл', 'ввк', 'амбулаторное_лечение', 'увольнение', 'в_строй', 'прибыл']
+        if data['movement_type'] in status_update_types:
+            new_status = data['movement_type']
+            if data['movement_type'] == 'в_строй':
+                new_status = 'в_строю'
+            elif data['movement_type'] == 'прибыл':
+                new_status = 'в_пвд'
+            elif data['movement_type'] == 'ввк':
+                new_status = 'ввк'
+            elif data['movement_type'] == 'амбулаторное_лечение':
+                new_status = 'амбулаторное_лечение'
+            elif data['movement_type'] == 'увольнение':
+                new_status = 'увольнение'
+                
             cur.execute("""
                 UPDATE personnel 
-                SET current_status = %s, updated_at = NOW()
+                SET current_status = %s, status_changed_at = NOW(), days_in_current_status = 0, updated_at = NOW()
                 WHERE id = %s
-            """, (data['movement_type'], data['personnel_id']))
+            """, (new_status, data['personnel_id']))
         
         conn.commit()
         

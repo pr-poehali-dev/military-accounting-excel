@@ -23,6 +23,8 @@ const MovementDialog = ({ open, onClose, personnelId }: MovementDialogProps) => 
     end_date: '',
     destination: '',
     notes: '',
+    vmo: '',
+    leave_days: '',
   });
 
   const mutation = useMutation({
@@ -41,6 +43,8 @@ const MovementDialog = ({ open, onClose, personnelId }: MovementDialogProps) => 
         end_date: '',
         destination: '',
         notes: '',
+        vmo: '',
+        leave_days: '',
       });
     },
     onError: () => {
@@ -82,6 +86,9 @@ const MovementDialog = ({ open, onClose, personnelId }: MovementDialogProps) => 
                 <SelectItem value="в_строй">Возвращение в строй</SelectItem>
                 <SelectItem value="госпитализация">Госпитализация</SelectItem>
                 <SelectItem value="отпуск">Отпуск</SelectItem>
+                <SelectItem value="ввк">ВВК на изменение категории</SelectItem>
+                <SelectItem value="амбулаторное_лечение">Амбулаторное лечение</SelectItem>
+                <SelectItem value="увольнение">Увольнение</SelectItem>
                 <SelectItem value="убыл">Убыл</SelectItem>
               </SelectContent>
             </Select>
@@ -116,6 +123,31 @@ const MovementDialog = ({ open, onClose, personnelId }: MovementDialogProps) => 
               onChange={(e) => setFormData({ ...formData, destination: e.target.value })}
             />
           </div>
+
+          {formData.movement_type === 'госпитализация' && (
+            <div>
+              <Label htmlFor="vmo">ВМО (куда направлен) *</Label>
+              <Input
+                id="vmo"
+                placeholder="Например: ГВКГ им. Бурденко"
+                value={formData.vmo}
+                onChange={(e) => setFormData({ ...formData, vmo: e.target.value })}
+              />
+            </div>
+          )}
+
+          {formData.movement_type === 'отпуск' && (
+            <div>
+              <Label htmlFor="leave_days">Количество суток отпуска *</Label>
+              <Input
+                id="leave_days"
+                type="number"
+                placeholder="Например: 14"
+                value={formData.leave_days}
+                onChange={(e) => setFormData({ ...formData, leave_days: e.target.value })}
+              />
+            </div>
+          )}
 
           <div>
             <Label htmlFor="notes">Примечания</Label>

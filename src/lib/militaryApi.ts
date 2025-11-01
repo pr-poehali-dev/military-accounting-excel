@@ -22,6 +22,9 @@ export interface Movement {
   end_date?: string;
   destination?: string;
   notes?: string;
+  vmo?: string;
+  leave_days?: number;
+  expected_return_date?: string;
   created_at: string;
 }
 
@@ -42,6 +45,14 @@ export interface Stats {
   gospitalizaciya: number;
   otpusk: number;
   ubyl: number;
+  vvk: number;
+  ambulatory: number;
+  uvolnenie: number;
+  alerts: {
+    hosp_over_30: number;
+    pvd_over_30: number;
+    leave_overdue: number;
+  };
 }
 
 export const militaryApi = {

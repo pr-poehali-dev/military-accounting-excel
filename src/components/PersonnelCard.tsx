@@ -31,6 +31,9 @@ const PersonnelCard = () => {
       'госпитализация': 'bg-red-500',
       'отпуск': 'bg-orange-500',
       'убыл': 'bg-gray-500',
+      'ввк': 'bg-yellow-500',
+      'амбулаторное_лечение': 'bg-teal-500',
+      'увольнение': 'bg-pink-500',
     };
     return colors[status] || 'bg-blue-500';
   };
@@ -42,6 +45,9 @@ const PersonnelCard = () => {
       'госпитализация': 'Госпитализация',
       'отпуск': 'В отпуске',
       'убыл': 'Убыл',
+      'ввк': 'ВВК',
+      'амбулаторное_лечение': 'Амбулаторное',
+      'увольнение': 'Увольнение',
     };
     return labels[status] || status;
   };
@@ -53,6 +59,9 @@ const PersonnelCard = () => {
       'убыл': 'Убыл',
       'прибыл': 'Прибыл в ПВД',
       'в_строй': 'Возвращение в строй',
+      'ввк': 'ВВК на изменение категории',
+      'амбулаторное_лечение': 'Амбулаторное лечение',
+      'увольнение': 'Увольнение',
     };
     return labels[type] || type;
   };
@@ -168,10 +177,25 @@ const PersonnelCard = () => {
                           <> - {new Date(movement.end_date).toLocaleDateString('ru-RU')}</>
                         )}
                       </p>
+                      {movement.vmo && (
+                        <p className="text-sm text-muted-foreground">
+                          <Icon name="Hospital" size={14} className="inline mr-1" />
+                          ВМО: {movement.vmo}
+                        </p>
+                      )}
                       {movement.destination && (
                         <p className="text-sm text-muted-foreground">
                           <Icon name="MapPin" size={14} className="inline mr-1" />
                           {movement.destination}
+                        </p>
+                      )}
+                      {movement.leave_days && (
+                        <p className="text-sm text-muted-foreground">
+                          <Icon name="Clock" size={14} className="inline mr-1" />
+                          {movement.leave_days} суток
+                          {movement.expected_return_date && (
+                            <span> (возвращение: {new Date(movement.expected_return_date).toLocaleDateString('ru-RU')})</span>
+                          )}
                         </p>
                       )}
                       {movement.notes && (

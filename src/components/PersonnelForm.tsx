@@ -129,6 +129,9 @@ const PersonnelForm = () => {
                   <SelectItem value="в_строю">В строю</SelectItem>
                   <SelectItem value="госпитализация">Госпитализация</SelectItem>
                   <SelectItem value="отпуск">В отпуске</SelectItem>
+                  <SelectItem value="ввк">ВВК на изменение категории</SelectItem>
+                  <SelectItem value="амбулаторное_лечение">Амбулаторное лечение</SelectItem>
+                  <SelectItem value="увольнение">Увольнение</SelectItem>
                   <SelectItem value="убыл">Убыл</SelectItem>
                 </SelectContent>
               </Select>
