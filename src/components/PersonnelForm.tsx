@@ -137,14 +137,14 @@ const PersonnelForm = () => {
             <div>
               <Label htmlFor="fitness_category">Категория годности</Label>
               <Select
-                value={formData.fitness_category}
-                onValueChange={(value) => setFormData({ ...formData, fitness_category: value })}
+                value={formData.fitness_category || 'none'}
+                onValueChange={(value) => setFormData({ ...formData, fitness_category: value === 'none' ? '' : value })}
               >
                 <SelectTrigger id="fitness_category">
                   <SelectValue placeholder="Не установлена" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Не установлена</SelectItem>
+                  <SelectItem value="none">Не установлена</SelectItem>
                   <SelectItem value="А">А - годен</SelectItem>
                   <SelectItem value="Б">Б - годен с незначительными ограничениями</SelectItem>
                   <SelectItem value="В">В - ограниченно годен</SelectItem>

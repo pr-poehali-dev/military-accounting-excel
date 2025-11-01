@@ -106,23 +106,23 @@ const Registry = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            <Select value={unitFilter} onValueChange={setUnitFilter}>
+            <Select value={unitFilter || 'all'} onValueChange={(value) => setUnitFilter(value === 'all' ? '' : value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Все подразделения" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Все подразделения</SelectItem>
+                <SelectItem value="all">Все подразделения</SelectItem>
                 {data?.units.map((unit) => (
                   <SelectItem key={unit} value={unit}>{unit}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter || 'all'} onValueChange={(value) => setStatusFilter(value === 'all' ? '' : value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Все статусы" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Все статусы</SelectItem>
+                <SelectItem value="all">Все статусы</SelectItem>
                 <SelectItem value="в_строю">В строю</SelectItem>
                 <SelectItem value="в_пвд">В ПВД</SelectItem>
                 <SelectItem value="госпитализация">Госпитализация</SelectItem>
