@@ -3,7 +3,7 @@
     {
       "name": "Get statistics",
       "method": "GET",
-      "path": "/stats",
+      "path": "/?action=stats",
       "expectedStatus": 200,
       "expectedBody": {
         "total": "number",
@@ -15,7 +15,7 @@
     {
       "name": "Get personnel list",
       "method": "GET",
-      "path": "/personnel",
+      "path": "/?action=personnel",
       "expectedStatus": 200,
       "expectedBody": {
         "personnel": "array",

@@ -15,8 +15,9 @@ def get_db_connection():
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     method = event.get('httpMethod', 'GET')
-    path = event.get('requestContext', {}).get('http', {}).get('path', '')
     query_params = event.get('queryStringParameters') or {}
+    path_params = event.get('pathParams') or {}
+    action = query_params.get('action', '')
     
     if method == 'OPTIONS':
         return {
@@ -34,30 +35,30 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     try:
         conn = get_db_connection()
         
-        if method == 'GET' and '/stats' in path:
+        if method == 'GET' and action == 'stats':
             return get_stats(conn)
-        elif method == 'GET' and '/personnel/' in path:
-            personnel_id = int(path.split('/')[-1])
+        elif method == 'GET' and action == 'personnel_detail':
+            personnel_id = int(query_params.get('id', 0))
             return get_personnel_detail(conn, personnel_id)
-        elif method == 'GET' and '/personnel' in path:
+        elif method == 'GET' and action == 'personnel':
             return get_personnel_list(conn, query_params)
-        elif method == 'POST' and '/personnel' in path:
+        elif method == 'POST' and action == 'create_personnel':
             body = json.loads(event.get('body', '{}'))
             return create_personnel(conn, body)
-        elif method == 'PUT' and '/personnel/' in path:
-            personnel_id = int(path.split('/')[-1])
+        elif method == 'PUT' and action == 'update_personnel':
+            personnel_id = int(query_params.get('id', 0))
             body = json.loads(event.get('body', '{}'))
             return update_personnel(conn, personnel_id, body)
-        elif method == 'POST' and '/movements' in path:
+        elif method == 'POST' and action == 'add_movement':
             body = json.loads(event.get('body', '{}'))
             return add_movement(conn, body)
-        elif method == 'POST' and '/medical-visits' in path:
+        elif method == 'POST' and action == 'add_medical_visit':
             body = json.loads(event.get('body', '{}'))
             return add_medical_visit(conn, body)
-        elif method == 'GET' and '/export' in path:
+        elif method == 'GET' and action == 'export':
             return export_to_excel(conn, query_params)
         else:
-            return error_response(404, 'Endpoint not found')
+            return error_response(404, 'Unknown action')
             
     except Exception as e:
         return error_response(500, str(e))
