@@ -1,3 +1,5 @@
+const API_URL = 'https://functions.poehali.dev/1832f881-34ce-4118-ae39-9d393481f0be';
+
 export interface Personnel {
   id: number;
   personal_number: string;
@@ -42,195 +44,77 @@ export interface Stats {
   ubyl: number;
 }
 
-const mockPersonnel: Personnel[] = [
-  {
-    id: 1,
-    personal_number: 'В-12345',
-    full_name: 'Иванов Иван Иванович',
-    rank: 'Рядовой',
-    unit: 'Рота А',
-    phone: '+7 (999) 123-45-67',
-    current_status: 'в_строю',
-    fitness_category: 'А',
-    fitness_category_date: '2024-01-15',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: 2,
-    personal_number: 'В-23456',
-    full_name: 'Петров Петр Петрович',
-    rank: 'Ефрейтор',
-    unit: 'Рота Б',
-    phone: '+7 (999) 234-56-78',
-    current_status: 'в_пвд',
-    fitness_category: 'Б',
-    fitness_category_date: '2024-02-10',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: 3,
-    personal_number: 'В-34567',
-    full_name: 'Сидоров Сидор Сидорович',
-    rank: 'Младший сержант',
-    unit: 'Рота А',
-    phone: '',
-    current_status: 'госпитализация',
-    fitness_category: 'В',
-    fitness_category_date: '2024-03-05',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  }
-];
-
-const mockMovements: Movement[] = [
-  {
-    id: 1,
-    personnel_id: 2,
-    movement_type: 'в_пвд',
-    start_date: '2024-10-15',
-    destination: 'ПВД',
-    notes: 'Направлен на обследование',
-    created_at: new Date().toISOString()
-  },
-  {
-    id: 2,
-    personnel_id: 3,
-    movement_type: 'госпитализация',
-    start_date: '2024-10-20',
-    destination: 'Военный госпиталь №1',
-    notes: 'Плановая госпитализация',
-    created_at: new Date().toISOString()
-  }
-];
-
-const mockMedicalVisits: MedicalVisit[] = [
-  {
-    id: 1,
-    personnel_id: 2,
-    visit_date: '2024-10-16',
-    doctor_specialty: 'Терапевт',
-    diagnosis: 'ОРВИ',
-    recommendations: 'Постельный режим, обильное питье',
-    created_at: new Date().toISOString()
-  }
-];
-
 export const militaryApi = {
   async getStats(): Promise<Stats> {
-    const stats = {
-      total: mockPersonnel.length,
-      v_pvd: mockPersonnel.filter(p => p.current_status === 'в_пвд').length,
-      v_stroyu: mockPersonnel.filter(p => p.current_status === 'в_строю').length,
-      gospitalizaciya: mockPersonnel.filter(p => p.current_status === 'госпитализация').length,
-      otpusk: mockPersonnel.filter(p => p.current_status === 'отпуск').length,
-      ubyl: mockPersonnel.filter(p => p.current_status === 'убыл').length
-    };
-    return Promise.resolve(stats);
+    const response = await fetch(`${API_URL}?action=stats`);
+    if (!response.ok) throw new Error('Failed to fetch stats');
+    return response.json();
   },
 
   async getPersonnel(search?: string, unit?: string, status?: string): Promise<{ personnel: Personnel[], units: string[] }> {
-    let filtered = [...mockPersonnel];
+    const params = new URLSearchParams({ action: 'personnel' });
+    if (search) params.append('search', search);
+    if (unit) params.append('unit', unit);
+    if (status) params.append('status', status);
     
-    if (search) {
-      const searchLower = search.toLowerCase();
-      filtered = filtered.filter(p => 
-        p.full_name.toLowerCase().includes(searchLower) || 
-        p.personal_number.toLowerCase().includes(searchLower)
-      );
-    }
-    
-    if (unit) {
-      filtered = filtered.filter(p => p.unit === unit);
-    }
-    
-    if (status) {
-      filtered = filtered.filter(p => p.current_status === status);
-    }
-    
-    const units = Array.from(new Set(mockPersonnel.map(p => p.unit).filter(Boolean))) as string[];
-    
-    return Promise.resolve({ personnel: filtered, units });
+    const response = await fetch(`${API_URL}?${params}`);
+    if (!response.ok) throw new Error('Failed to fetch personnel');
+    return response.json();
   },
 
   async getPersonnelDetail(id: number): Promise<{ personnel: Personnel, movements: Movement[], medical_visits: MedicalVisit[] }> {
-    const personnel = mockPersonnel.find(p => p.id === id);
-    if (!personnel) throw new Error('Personnel not found');
-    
-    const movements = mockMovements.filter(m => m.personnel_id === id);
-    const medical_visits = mockMedicalVisits.filter(v => v.personnel_id === id);
-    
-    return Promise.resolve({ personnel, movements, medical_visits });
+    const response = await fetch(`${API_URL}?action=personnel_detail&id=${id}`);
+    if (!response.ok) throw new Error('Failed to fetch personnel detail');
+    return response.json();
   },
 
-  async createPersonnel(data: Omit<Personnel, 'id' | 'created_at' | 'updated_at'>): Promise<Personnel> {
-    const newPersonnel: Personnel = {
-      ...data,
-      id: Math.max(...mockPersonnel.map(p => p.id), 0) + 1,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    mockPersonnel.push(newPersonnel);
-    return Promise.resolve(newPersonnel);
+  async createPersonnel(data: Partial<Personnel>): Promise<Personnel> {
+    const response = await fetch(`${API_URL}?action=create_personnel`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!response.ok) throw new Error('Failed to create personnel');
+    return response.json();
   },
 
   async updatePersonnel(id: number, data: Partial<Personnel>): Promise<Personnel> {
-    const index = mockPersonnel.findIndex(p => p.id === id);
-    if (index === -1) throw new Error('Personnel not found');
-    
-    mockPersonnel[index] = {
-      ...mockPersonnel[index],
-      ...data,
-      updated_at: new Date().toISOString()
-    };
-    return Promise.resolve(mockPersonnel[index]);
+    const response = await fetch(`${API_URL}?action=update_personnel&id=${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!response.ok) throw new Error('Failed to update personnel');
+    return response.json();
   },
 
-  async addMovement(data: Omit<Movement, 'id' | 'created_at'>): Promise<Movement> {
-    const newMovement: Movement = {
-      ...data,
-      id: Math.max(...mockMovements.map(m => m.id), 0) + 1,
-      created_at: new Date().toISOString()
-    };
-    mockMovements.push(newMovement);
-    
-    if (['госпитализация', 'отпуск', 'убыл'].includes(data.movement_type)) {
-      const personnel = mockPersonnel.find(p => p.id === data.personnel_id);
-      if (personnel) {
-        personnel.current_status = data.movement_type;
-        personnel.updated_at = new Date().toISOString();
-      }
-    }
-    
-    return Promise.resolve(newMovement);
+  async addMovement(data: Partial<Movement>): Promise<Movement> {
+    const response = await fetch(`${API_URL}?action=add_movement`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!response.ok) throw new Error('Failed to add movement');
+    return response.json();
   },
 
-  async addMedicalVisit(data: Omit<MedicalVisit, 'id' | 'created_at'> & { fitness_category?: string }): Promise<MedicalVisit> {
-    const newVisit: MedicalVisit = {
-      id: Math.max(...mockMedicalVisits.map(v => v.id), 0) + 1,
-      personnel_id: data.personnel_id,
-      visit_date: data.visit_date,
-      doctor_specialty: data.doctor_specialty,
-      diagnosis: data.diagnosis,
-      recommendations: data.recommendations,
-      created_at: new Date().toISOString()
-    };
-    mockMedicalVisits.push(newVisit);
-    
-    if (data.fitness_category) {
-      const personnel = mockPersonnel.find(p => p.id === data.personnel_id);
-      if (personnel) {
-        personnel.fitness_category = data.fitness_category;
-        personnel.fitness_category_date = data.visit_date;
-        personnel.updated_at = new Date().toISOString();
-      }
-    }
-    
-    return Promise.resolve(newVisit);
+  async addMedicalVisit(data: Partial<MedicalVisit> & { fitness_category?: string }): Promise<MedicalVisit> {
+    const response = await fetch(`${API_URL}?action=add_medical_visit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!response.ok) throw new Error('Failed to add medical visit');
+    return response.json();
   },
 
-  async exportData(): Promise<Personnel[]> {
-    return Promise.resolve([...mockPersonnel]);
+  async exportData(unit?: string, status?: string): Promise<{ data: Personnel[], message: string }> {
+    const params = new URLSearchParams({ action: 'export' });
+    if (unit) params.append('unit', unit);
+    if (status) params.append('status', status);
+    
+    const response = await fetch(`${API_URL}?${params}`);
+    if (!response.ok) throw new Error('Failed to export data');
+    return response.json();
   }
 };
