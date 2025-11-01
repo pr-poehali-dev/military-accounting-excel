@@ -1,0 +1,27 @@
+{
+  "tests": [
+    {
+      "name": "Get statistics",
+      "method": "GET",
+      "path": "/stats",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "total": "number",
+        "v_pvd": "number",
+        "v_stroyu": "number"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Get personnel list",
+      "method": "GET",
+      "path": "/personnel",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "personnel": "array",
+        "units": "array"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
