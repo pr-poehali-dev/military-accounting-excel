@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import Icon from '@/components/ui/icon';
 import { militaryApi, Personnel } from '@/lib/militaryApi';
 import { useNavigate } from 'react-router-dom';
+import ExcelImport from '@/components/ExcelImport';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Registry = () => {
   const [searchParams] = useSearchParams();
@@ -109,6 +111,24 @@ const Registry = () => {
           </Button>
         </div>
       </div>
+
+      <Tabs defaultValue="registry" className="w-full">
+        <TabsList>
+          <TabsTrigger value="registry">
+            <Icon name="Users" size={16} className="mr-2" />
+            Реестр
+          </TabsTrigger>
+          <TabsTrigger value="import">
+            <Icon name="Upload" size={16} className="mr-2" />
+            Импорт из Excel
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="import" className="mt-6">
+          <ExcelImport />
+        </TabsContent>
+
+        <TabsContent value="registry" className="mt-6 space-y-6">
 
       <Card>
         <CardHeader>
@@ -215,6 +235,8 @@ const Registry = () => {
           )}
         </div>
       )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
